@@ -16,6 +16,15 @@ struct Game {
     scale: usize,
 }
 
+impl Game {
+    /**
+     * Destructuring function
+     */
+    fn destruct(self: &Self) -> (usize, &GameState) {
+        return (self.scale, &self.state);
+    }
+}
+
 fn main() {
     println!("Tik Tak Toe!");
 
@@ -94,7 +103,7 @@ fn game_main(scale: usize) {
 }
 
 fn print_game(game: &Game) {
-    let scale: usize = game.scale;
+    let (scale, state) = game.destruct();
     let alphabet: Vec<char> = "abcdefghijklmnopqrstuvwxyz".chars().collect();
 
     println!(
@@ -109,7 +118,7 @@ fn print_game(game: &Game) {
         for y in 0..scale {
             print!(
                 "{}",
-                match game.state[x * y] {
+                match state[x * y] {
                     Some(PlayerSymbol::X) => "x",
                     Some(PlayerSymbol::O) => "o",
                     None => ".",
@@ -130,35 +139,37 @@ fn who_wins(game: &Game) -> Option<PlayerSymbol> {
         return v.windows(2).all(|w| w[0] == w[1]);
     }
 
-    let first_diagonal: Vec<_> = (0..game.scale)
-        .map(|it| game.scale * it + it)
-        .flat_map(|it| game.state.get(it))
+    let (scale, state) = game.destruct();
+
+    let first_diagonal: Vec<_> = (0..scale)
+        .map(|it| scale * it + it)
+        .flat_map(|it| state.get(it))
         .cloned()
         .collect();
 
-    let second_diagonal: Vec<_> = (0..game.scale)
+    let second_diagonal: Vec<_> = (0..scale)
         .rev()
         .map(|it| it + 1)
-        .map(|it| it * game.scale - it)
-        .flat_map(|it| game.state.get(it))
+        .map(|it| it * scale - it)
+        .flat_map(|it| state.get(it))
         .cloned()
         .collect();
 
-    let rows: Vec<Vec<_>> = (0..game.scale)
+    let rows: Vec<Vec<_>> = (0..scale)
         .map(|x| {
-            return (0..game.scale)
-                .map(|y| y + game.scale * x)
-                .flat_map(|it| game.state.get(it))
+            return (0..scale)
+                .map(|y| y + scale * x)
+                .flat_map(|it| state.get(it))
                 .cloned()
                 .collect();
         })
         .collect();
 
-    let columns: Vec<_> = (0..game.scale)
+    let columns: Vec<_> = (0..scale)
         .map(|x| {
-            return (0..game.scale)
-                .map(|y| y * game.scale + x)
-                .flat_map(|it| game.state.get(it))
+            return (0..scale)
+                .map(|y| y * scale + x)
+                .flat_map(|it| state.get(it))
                 .cloned()
                 .collect();
         })
