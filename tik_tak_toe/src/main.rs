@@ -126,8 +126,6 @@ fn print_game(game: &Game) {
     }
 }
 
-// FIXME: try to remove the ref on the Option<&PlayerSymbol>
-// TODO: test that shit
 fn who_wins(game: &Game) -> Option<PlayerSymbol> {
     fn all_same<T>(v: &Vec<T>) -> bool
     where
