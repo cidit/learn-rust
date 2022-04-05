@@ -181,9 +181,6 @@ fn who_wins(game: &Game) -> Option<PlayerSymbol> {
     possible_win_configurations.extend(rows);
     possible_win_configurations.extend(columns);
 
-    println!("{:?}", possible_win_configurations);
-
-    // kind of ugly shit
     for configuration in possible_win_configurations {
         if configuration.iter().any(|it| it.is_none()) {
             continue;
@@ -194,4 +191,36 @@ fn who_wins(game: &Game) -> Option<PlayerSymbol> {
     }
 
     return None;
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn who_wins_works() {
+        // FIXME: non-exhaustive
+        use PlayerSymbol::{O, X};
+
+        let totest = vec![
+            Some(X),
+            Some(O),
+            None,
+            Some(X),
+            Some(X),
+            Some(O),
+            None,
+            Some(O),
+            Some(X),
+        ];
+
+        assert_eq!(
+            Some(X),
+            who_wins(&Game {
+                scale: 3,
+                state: totest
+            })
+        );
+    }
 }
