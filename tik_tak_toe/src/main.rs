@@ -1,3 +1,4 @@
+use std::fmt;
 use std::io::stdin;
 
 const MAX_SCALE: i32 = 9;
@@ -9,11 +10,20 @@ enum PlayerSymbol {
     O,
 }
 
+impl fmt::Display for PlayerSymbol {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[{:?}]", self)
+    }
+}
+
 type GameState = Vec<Option<PlayerSymbol>>;
 
 struct Game {
-    state: GameState,
+    /**
+     * the width, height and diagonal of the game
+     */
     scale: usize,
+    state: GameState,
 }
 
 impl Game {
@@ -23,6 +33,17 @@ impl Game {
     fn destruct(self: &Self) -> (usize, &GameState) {
         return (self.scale, &self.state);
     }
+
+    /**
+     * constructor
+     * initializes the state according to the specified scale
+     */
+    fn new(scale: usize) -> Self {
+        return Self {
+            scale,
+            state: (0..scale * scale).map(|_| None).collect(),
+        };
+    }
 }
 
 fn main() {
@@ -31,7 +52,8 @@ fn main() {
     loop {
         let scale = get_game_scale();
 
-        game_main(scale as usize);
+        let winner = game_main(scale as usize);
+
 
         if !get_continue_game() {
             break;
@@ -81,21 +103,21 @@ fn get_continue_game() -> bool {
     }
 }
 
-fn game_main(scale: usize) {
+fn game_main(scale: usize) -> Option<PlayerSymbol>{
     // TODO: unfinshed
     println!("new game!");
 
-    let game = Game {
-        scale,
-        state: (0..scale * scale).map(|_| None).collect(),
-    };
+    let game = Game::new(scale);
 
     loop {
         println!("Game state:");
         print_game(&game);
 
-        who_wins(&game);
-        loop {}
+        match who_wins(&game) {
+            Some(winner) => return Some(winner),
+            None if is_board_full(&game.state) => return None, // thats a draw!
+            None => continue,
+        }
     }
 }
 
@@ -186,6 +208,10 @@ fn who_wins(game: &Game) -> Option<PlayerSymbol> {
     }
 
     return None;
+}
+
+fn is_board_full(state: &GameState) -> bool {
+    return state.iter().all(|it| it.is_some())
 }
 
 #[cfg(test)]
