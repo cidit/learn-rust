@@ -64,9 +64,6 @@ fn get_game_scale() -> i32 {
 }
 
 fn get_continue_game() -> bool {
-    // FIXME: not taking into account anything other than "n" or ""
-    // TODO: add "yesn't" easter egg?
-
     loop {
         println!("new game? [y/n, default: y]");
         let mut input = String::new();
