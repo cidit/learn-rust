@@ -18,6 +18,7 @@ impl fmt::Display for PlayerSymbol {
 
 type GameState = Vec<Option<PlayerSymbol>>;
 
+// FIXME: should be a tightly encapsulated data structure
 struct Game {
     /**
      * the width, height and diagonal of the game
@@ -30,8 +31,12 @@ impl Game {
     /**
      * Destructuring function
      */
-    fn destruct(self: &Self) -> (usize, &GameState) {
+    fn destruct(&self) -> (usize, &GameState) {
         return (self.scale, &self.state);
+    }
+
+    fn destruct_mut(&mut self) -> (usize, &mut GameState) {
+        return (self.scale, &mut self.state);
     }
 
     /**
@@ -49,11 +54,32 @@ impl Game {
 fn main() {
     println!("Tik Tak Toe!");
 
+    let mut x_points = 0;
+    let mut o_points = 0;
+    let mut total_games = 0;
+
     loop {
         let scale = get_game_scale();
 
-        let winner = game_main(scale as usize);
+        let winner = game_main(scale as usize, PlayerSymbol::O);
+        total_games += 1;
 
+        match winner {
+            Some(PlayerSymbol::O) => {
+                println!("O wins!");
+                o_points += 1;
+            }
+            Some(PlayerSymbol::X) => {
+                println!("X wins!");
+                x_points += 1;
+            }
+            None => (),
+        };
+
+        println!(
+            "[Points] X: {} | O: {} | Total: {}",
+            x_points, o_points, total_games
+        );
 
         if !get_continue_game() {
             break;
@@ -103,15 +129,89 @@ fn get_continue_game() -> bool {
     }
 }
 
-fn game_main(scale: usize) -> Option<PlayerSymbol>{
+// FIXME: refactor with result
+fn get_next_move(game: &Game) -> (usize, usize) {
+    let alphabet: Vec<char> = "abcdefghijklmnopqrstuvwxyz".chars().collect();
+    let (scale, state) = game.destruct();
+
+    loop {
+        println!("enter next move [xy, x: uinteger, y: char]");
+        let mut input = String::new();
+        stdin().read_line(&mut input).expect("fuck");
+
+        let input: Vec<_> = input.trim().chars().take(2).collect();
+        let x = match input.get(0) {
+            Some(x) => match x.to_string().parse::<usize>() {
+                Ok(x) => x,
+                Err(_) => {
+                    println!("/!\\ first character is not a number");
+                    continue;
+                }
+            },
+            None => {
+                println!("/!\\ input is empty");
+                continue;
+            }
+        };
+        let y = match input.get(1) {
+            Some(y) if y.is_alphabetic() => {
+                match alphabet.iter().position(|&c| c as u8 == *y as u8) {
+                    Some(y) => y + 1 as usize,
+                    None => {
+                        println!("/!\\ second character is not a lowercase letter");
+                        continue;
+                    }
+                }
+            }
+            _ => {
+                println!("/!\\ invalid or absent second character");
+                continue;
+            }
+        };
+
+        if 0 == x && x > scale && 0 == y && y > scale {
+            println!("/!\\ x or y too big or too small");
+            continue;
+        }
+
+        let x = x - 1;
+        let y = y - 1;
+
+        if state[y * scale + x].is_some() {
+            println!("/!\\ theres already something there");
+            continue;
+        }
+
+        return (x, y);
+    }
+}
+
+fn game_main(scale: usize, starting_player: PlayerSymbol) -> Option<PlayerSymbol> {
     // TODO: unfinshed
     println!("new game!");
 
-    let game = Game::new(scale);
+    let mut game = Game::new(scale);
+
+    let mut current_player = starting_player;
 
     loop {
         println!("Game state:");
         print_game(&game);
+
+        println!("it's {}'s turn to move!", current_player);
+
+        let (x, y) = get_next_move(&game);
+        println!();
+
+        let (scale, state) = game.destruct_mut();
+
+        state[y * scale + x] = Some(current_player);
+
+        current_player = if current_player == PlayerSymbol::O {
+            PlayerSymbol::X
+        } else {
+            PlayerSymbol::O
+        };
 
         match who_wins(&game) {
             Some(winner) => return Some(winner),
@@ -126,18 +226,19 @@ fn print_game(game: &Game) {
     let alphabet: Vec<char> = "abcdefghijklmnopqrstuvwxyz".chars().collect();
 
     println!(
-        " {}",
+        "\n  {}",
         (1..scale + 1)
             .map(|x| x.to_string())
             .reduce(|a, b| format!("{}{}", a, b))
             .unwrap()
     );
     for x in 0..scale {
-        print!("{}", alphabet[x]);
+        print!("{}|", alphabet[x]);
+        // print!("{}", (x + 60) as u8 as char);
         for y in 0..scale {
             print!(
                 "{}",
-                match state[x * y] {
+                match state[x * scale + y] {
                     Some(PlayerSymbol::X) => "x",
                     Some(PlayerSymbol::O) => "o",
                     None => ".",
@@ -146,6 +247,7 @@ fn print_game(game: &Game) {
         }
         println!()
     }
+    println!();
 }
 
 fn who_wins(game: &Game) -> Option<PlayerSymbol> {
@@ -211,7 +313,7 @@ fn who_wins(game: &Game) -> Option<PlayerSymbol> {
 }
 
 fn is_board_full(state: &GameState) -> bool {
-    return state.iter().all(|it| it.is_some())
+    return state.iter().all(|it| it.is_some());
 }
 
 #[cfg(test)]
@@ -243,5 +345,27 @@ mod tests {
                 state: totest
             })
         );
+    }
+
+    #[test]
+    fn print_game_works() {
+        use PlayerSymbol::{O, X};
+
+        let totest = vec![
+            Some(X),
+            Some(O),
+            None,
+            Some(X),
+            Some(X),
+            Some(O),
+            None,
+            Some(O),
+            Some(X),
+        ];
+
+        print_game(&Game {
+            scale: 3,
+            state: totest,
+        })
     }
 }
