@@ -1,55 +1,10 @@
-use std::fmt;
+mod types;
+mod constants;
+
 use std::io::stdin;
+use types::*;
 
-const MAX_SCALE: i32 = 9;
-const DEFAULT_SCALE: i32 = 3;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-enum PlayerSymbol {
-    X,
-    O,
-}
-
-impl fmt::Display for PlayerSymbol {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "[{:?}]", self)
-    }
-}
-
-type GameState = Vec<Option<PlayerSymbol>>;
-
-// FIXME: should be a tightly encapsulated data structure
-struct Game {
-    /**
-     * the width, height and diagonal of the game
-     */
-    scale: usize,
-    state: GameState,
-}
-
-impl Game {
-    /**
-     * Destructuring function
-     */
-    fn destruct(&self) -> (usize, &GameState) {
-        return (self.scale, &self.state);
-    }
-
-    fn destruct_mut(&mut self) -> (usize, &mut GameState) {
-        return (self.scale, &mut self.state);
-    }
-
-    /**
-     * constructor
-     * initializes the state according to the specified scale
-     */
-    fn new(scale: usize) -> Self {
-        return Self {
-            scale,
-            state: (0..scale * scale).map(|_| None).collect(),
-        };
-    }
-}
 
 fn main() {
     println!("Tik Tak Toe!");
@@ -91,15 +46,15 @@ fn get_game_scale() -> i32 {
     loop {
         println!(
             "which scale do you want to play at? [max: {}, default: {}]",
-            MAX_SCALE, DEFAULT_SCALE
+            constants::MAX_SCALE, constants::DEFAULT_SCALE
         );
         let mut input = String::new();
         stdin().read_line(&mut input).expect("fuck");
         match input.trim() {
-            "" => return DEFAULT_SCALE,
+            "" => return constants::DEFAULT_SCALE,
             other => match other.parse::<i32>() {
                 Ok(it) => {
-                    if it <= MAX_SCALE && it >= 3 {
+                    if it <= constants::MAX_SCALE && it >= 3 {
                         return it;
                     } else {
                         continue;
