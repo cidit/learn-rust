@@ -1,10 +1,8 @@
-mod types;
 mod constants;
+mod types;
 
 use std::io::stdin;
 use types::*;
-
-
 
 fn main() {
     println!("Tik Tak Toe!");
@@ -46,7 +44,8 @@ fn get_game_scale() -> i32 {
     loop {
         println!(
             "which scale do you want to play at? [max: {}, default: {}]",
-            constants::MAX_SCALE, constants::DEFAULT_SCALE
+            constants::MAX_SCALE,
+            constants::DEFAULT_SCALE
         );
         let mut input = String::new();
         stdin().read_line(&mut input).expect("fuck");
@@ -300,27 +299,5 @@ mod tests {
                 state: totest
             })
         );
-    }
-
-    #[test]
-    fn print_game_works() {
-        use PlayerSymbol::{O, X};
-
-        let totest = vec![
-            Some(X),
-            Some(O),
-            None,
-            Some(X),
-            Some(X),
-            Some(O),
-            None,
-            Some(O),
-            Some(X),
-        ];
-
-        print_game(&Game {
-            scale: 3,
-            state: totest,
-        })
     }
 }

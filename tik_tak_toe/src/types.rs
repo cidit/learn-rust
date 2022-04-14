@@ -12,38 +12,72 @@ impl fmt::Display for PlayerSymbol {
     }
 }
 
+#[derive(Debug)]
+pub enum GameInitErr {
+    ScaleSmallerThanStroke,
+}
+
 pub type GameState = Vec<Option<PlayerSymbol>>;
 
 // FIXME: should be a tightly encapsulated data structure
 pub struct Game {
-    /**
-     * the width, height and diagonal of the game
-     */
-    pub scale: usize,
-    pub state: GameState,
+    scale: usize,
+    state: GameState,
+    stroke: u16,
+    current_player: PlayerSymbol,
 }
 
 impl Game {
     /**
-     * Destructuring function
-     */
-    pub fn destruct(&self) -> (usize, &GameState) {
-        return (self.scale, &self.state);
-    }
-
-    pub fn destruct_mut(&mut self) -> (usize, &mut GameState) {
-        return (self.scale, &mut self.state);
-    }
-
-    /**
      * constructor
      * initializes the state according to the specified scale
      */
-    pub fn new(scale: usize) -> Self {
-        return Self {
+    pub fn new(
+        scale: usize,
+        stroke: u16,
+        starting_player: PlayerSymbol,
+    ) -> Result<Self, GameInitErr> {
+        use GameInitErr::ScaleSmallerThanStroke;
+
+        if scale < stroke as usize {
+            return Err(ScaleSmallerThanStroke);
+        }
+
+        return Ok(Self {
             scale,
             state: (0..scale * scale).map(|_| None).collect(),
-        };
+            stroke,
+            current_player: starting_player,
+        });
+    }
+
+    pub fn from(
+        scale: usize,
+        stroke: u16,
+        starting_player: PlayerSymbol,
+        saved: Vec<(i32, char)>
+    ) -> Result<Self, GameInitErr> {
+
+    }
+
+    pub fn winner() -> Option<PlayerSymbol> {
+        unimplemented!()
+    }
+
+    pub fn finished() -> bool {
+        unimplemented!()
+    }
+
+    fn is_board_full(&self) -> bool {
+        return self.state.iter().all(|it| it.is_some());
+    }
+
+    pub fn make_move(player_move: (i32, char)) {
+        unimplemented!()
+    }
+
+    fn apply_move(&self, x: usize, y: usize) {
+        self.state[y * self.scale + x] = Some(self.current_player);
     }
 }
 
@@ -83,8 +117,14 @@ mod tests {
     use super::*;
 
     #[test]
+    fn game_creation() {
+        unimplemented!();
+        // testing constructors
+    }
+
+    #[test]
     fn fmt_game() {
-        let game = Game::new(3);
+        let game = Game::new(3, 3, PlayerSymbol::X).unwrap();
         let actual = format!("{}", game);
         let expected = concat!("  123\n", "a|...\n", "b|...\n", "c|...\n",);
         assert_eq!(expected, actual)
