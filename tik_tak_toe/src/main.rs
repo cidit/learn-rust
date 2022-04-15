@@ -84,7 +84,7 @@ fn get_continue_game() -> bool {
 }
 
 // FIXME: refactor with result
-fn get_next_move(game: &Game) -> (usize, usize) {
+fn get_next_move(game: &TikTakToe) -> (usize, usize) {
     let alphabet: Vec<char> = "abcdefghijklmnopqrstuvwxyz".chars().collect();
     let (scale, state) = game.destruct();
 
@@ -144,7 +144,7 @@ fn game_main(scale: usize, starting_player: PlayerSymbol) -> Option<PlayerSymbol
     // TODO: unfinshed
     println!("new game!");
 
-    let mut game = Game::new(scale);
+    let mut game = TikTakToe::new(scale);
 
     let mut current_player = starting_player;
 
@@ -175,36 +175,7 @@ fn game_main(scale: usize, starting_player: PlayerSymbol) -> Option<PlayerSymbol
     }
 }
 
-fn print_game(game: &Game) {
-    let (scale, state) = game.destruct();
-    let alphabet: Vec<char> = "abcdefghijklmnopqrstuvwxyz".chars().collect();
-
-    println!(
-        "\n  {}",
-        (1..scale + 1)
-            .map(|x| x.to_string())
-            .reduce(|a, b| format!("{}{}", a, b))
-            .unwrap()
-    );
-    for x in 0..scale {
-        print!("{}|", alphabet[x]);
-        // print!("{}", (x + 60) as u8 as char);
-        for y in 0..scale {
-            print!(
-                "{}",
-                match state[x * scale + y] {
-                    Some(PlayerSymbol::X) => "x",
-                    Some(PlayerSymbol::O) => "o",
-                    None => ".",
-                }
-            )
-        }
-        println!()
-    }
-    println!();
-}
-
-fn who_wins(game: &Game) -> Option<PlayerSymbol> {
+fn who_wins(game: &TikTakToe) -> Option<PlayerSymbol> {
     fn all_same<T>(v: &Vec<T>) -> bool
     where
         T: PartialEq,
@@ -294,7 +265,7 @@ mod tests {
 
         assert_eq!(
             Some(X),
-            who_wins(&Game {
+            who_wins(&TikTakToe {
                 scale: 3,
                 state: totest
             })
