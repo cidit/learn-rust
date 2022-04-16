@@ -13,8 +13,19 @@ impl fmt::Display for PlayerSymbol {
 }
 
 #[derive(Debug)]
-pub enum GameInitErr {
+pub enum GameInitErrKind {
     ScaleSmallerThanStroke,
+    IncoherentMoves {
+        move_count: u32,
+        reason: MoveValidity,
+    },
+}
+
+#[derive(Debug)]
+pub enum MoveValidity {
+    Valid,
+    OutOfBounds,
+    AlreadyTaken,
 }
 
 pub type GameState = Vec<Option<PlayerSymbol>>;
@@ -23,27 +34,44 @@ pub type GameState = Vec<Option<PlayerSymbol>>;
 pub struct TikTakToe {
     scale: usize,
     state: GameState,
-    stroke: u16,
+    stroke: u32,
     current_player: PlayerSymbol,
 }
 
 impl TikTakToe {
+
+    pub fn scale(&self) -> usize {
+        return self.scale;
+    }
+
+    pub fn state(&self) -> &GameState {
+        return &self.state;
+    }
+
+    pub fn stroke(&self) -> u32 {
+        return self.stroke;
+    }
+
+    pub fn current_player(&self) -> PlayerSymbol {
+        return self.current_player;
+    }
+ 
     /**
      * constructor
-     * initializes the state according to the specified scale
+     * initializes an empty state according of the specified scale
      */
     pub fn new(
         scale: usize,
-        stroke: u16,
+        stroke: u32,
         starting_player: PlayerSymbol,
-    ) -> Result<Self, GameInitErr> {
-        use GameInitErr::ScaleSmallerThanStroke;
+    ) -> Result<Self, GameInitErrKind> {
+        use GameInitErrKind::ScaleSmallerThanStroke;
 
         if scale < stroke as usize {
             return Err(ScaleSmallerThanStroke);
         }
 
-        return Ok(TikTakToe {
+        return Ok(Self {
             scale,
             state: (0..scale * scale).map(|_| None).collect(),
             stroke,
@@ -51,82 +79,105 @@ impl TikTakToe {
         });
     }
 
+    /**
+     * constructor
+     * populate the state according to the specified list of moves
+     */
     pub fn from(
         scale: usize,
-        stroke: u16,
+        stroke: u32,
         starting_player: PlayerSymbol,
-        saved: Vec<(i32, char)>
-    ) -> Result<Self, GameInitErr> {
-        unimplemented!()
+        moves: Vec<(i32, i32)>,
+    ) -> Result<Self, GameInitErrKind> {
+        use GameInitErrKind::IncoherentMoves;
+
+        let game = Self::new(scale, stroke, starting_player)?;
+
+        for (i, mv) in moves.iter().enumerate() {
+            match game.is_move_valid(mv) {
+                Valid => {
+                    game.play(mv);
+                }
+                reason => {
+                    return Err(IncoherentMoves {
+                        move_count: i as u32,
+                        reason,
+                    });
+                }
+            }
+        }
+
+        return Ok(game);
     }
 
     pub fn winner(&self) -> Option<PlayerSymbol> {
-        fn all_same<T>(v: &Vec<T>) -> bool
-        where
-            T: PartialEq,
-        {
-            return v.windows(2).all(|w| w[0] == w[1]);
-        }
+        let bound = self.scale as i32;
 
-        // let first_diagonal: Vec<_> = (0..self.scale)
-        //     .map(|it| self.scale * it + it)
-        //     .flat_map(|it| self.state.get(it))
-        //     .cloned()
-        //     .collect();
+        let generate_coords = |x: i32, a: i32, b: i32| (x, x * a + b);
+        let is_in_bounds = |(_x, y): &(i32, i32)| *y <= bound && *y >= 0;
+        let find_in_state =
+            |(x, y): (i32, i32)| self.state.get(x as usize * self.scale + y as usize);
 
-        // let second_diagonal: Vec<_> = (0..self.scale)
-        //     .rev()
-        //     .map(|it| it + 1)
-        //     .map(|it| it * self.scale - it)
-        //     .flat_map(|it| self.state.get(it))
-        //     .cloned()
-        //     .collect();
-
-        // y = x * a + b
-
-        let pos_a_diag: Vec<Vec<_>> = (0..self.scale)
-            .map(|x| {
-                (0..self.scale)
-                    .map(|y| {
-
-                    })
+        let pos_a_diag: Vec<Vec<_>> = (bound..-bound)
+            .map(|b| {
+                (0..bound)
+                    .map(|x| generate_coords(x, 1, b))
+                    .filter(is_in_bounds)
+                    .flat_map(find_in_state)
                     .cloned()
                     .collect()
             })
             .collect();
 
-        let rows: Vec<Vec<_>> = (0..self.scale)
-            .map(|x| {
-                return (0..self.scale)
-                    .map(|y| y + self.scale * x)
-                    .flat_map(|it| self.state.get(it))
+        let neg_a_diag: Vec<Vec<_>> = (0..2 * bound)
+            .map(|b| {
+                (0..bound)
+                    .map(|x| generate_coords(x, 1, b))
+                    .filter(is_in_bounds)
+                    .flat_map(find_in_state)
                     .cloned()
-                    .collect();
+                    .collect()
             })
             .collect();
 
-        let columns: Vec<_> = (0..self.scale)
+        let rows: Vec<Vec<_>> = (0..bound)
             .map(|x| {
-                return (0..self.scale)
-                    .map(|y| y * self.scale + x)
-                    .flat_map(|it| self.state.get(it))
+                (0..bound)
+                    .map(|y| (x, y))
+                    .flat_map(find_in_state)
                     .cloned()
-                    .collect();
+                    .collect()
             })
             .collect();
 
-        let mut possible_win_configurations: Vec<Vec<Option<PlayerSymbol>>> = Vec::new();
-        // possible_win_configurations.push(first_diagonal);
-        // possible_win_configurations.push(second_diagonal);
-        possible_win_configurations.extend(rows);
-        possible_win_configurations.extend(columns);
+        let columns: Vec<Vec<_>> = (0..bound)
+            .map(|x| {
+                (0..bound)
+                    .map(|y| (y, x))
+                    .flat_map(find_in_state)
+                    .cloned()
+                    .collect()
+            })
+            .collect();
 
-        for configuration in possible_win_configurations {
-            if configuration.iter().any(|it| it.is_none()) {
-                continue;
-            }
-            if all_same(&configuration.iter().flatten().collect::<Vec<_>>()) {
-                return configuration[0];
+        let lines = [pos_a_diag, neg_a_diag, columns, rows];
+        let lines: Vec<_> = Vec::from(lines).iter().flatten().collect();
+
+        let all_some = |v: &Vec<_>| v.iter().all(Option::is_some);
+        let all_same = |v: &Vec<_>| v.windows(2).all(|w| w[0] == w[1]);
+
+        for line in lines {
+            let possible_win_configurations: Vec<PlayerSymbol> = line
+                .windows(self.stroke as usize)
+                .map(Vec::from)
+                .filter(all_some)
+                .filter(all_same)
+                .map(|v| v.get(0).unwrap())
+                .flatten()
+                .cloned()
+                .collect();
+            if possible_win_configurations.len() > 0 {
+                return possible_win_configurations.get(0).map(|winner| *winner);
             }
         }
 
@@ -137,10 +188,43 @@ impl TikTakToe {
         return self.state.iter().all(|it| it.is_some());
     }
 
-    pub fn play(player_move: (i32, char)) {
-        unimplemented!()
+    /**
+     * may trigger a side effect
+     */
+    pub fn play(&self, player_move: &(i32, i32)) -> MoveValidity {
+        let (x, y) = player_move;
+
+        match self.is_move_valid(player_move) {
+            Valid => {
+                use PlayerSymbol::*;
+                self.apply_move(*x as usize, *y as usize);
+                self.current_player = if self.current_player == O { X } else { O };
+                return Valid;
+            }
+            reason => return reason,
+        }
     }
 
+    fn is_move_valid(&self, player_move: &(i32, i32)) -> MoveValidity {
+        use MoveValidity::*;
+
+        let (x, y) = *player_move;
+
+        if x < 0 || y < 0 || x > self.scale as i32 || y > self.scale as i32 {
+            return OutOfBounds;
+        }
+
+        let (x, y) = (x as usize, y as usize);
+        if self.state[y * self.scale + x].is_some() {
+            return AlreadyTaken;
+        }
+
+        return Valid;
+    }
+
+    /**
+     * Applies side effect
+     */
     fn apply_move(&self, x: usize, y: usize) {
         self.state[y * self.scale + x] = Some(self.current_player);
     }
@@ -148,7 +232,6 @@ impl TikTakToe {
 
 impl fmt::Display for TikTakToe {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let alphabet: Vec<char> = "abcdefghijklmnopqrstuvwxyz".chars().collect();
         let mut display = String::new();
 
         let header = format!(
@@ -161,7 +244,7 @@ impl fmt::Display for TikTakToe {
         display.push_str(&header);
 
         for x in 0..self.scale {
-            display.push_str(&format!("{}|", alphabet[x]));
+            display.push_str(&format!("{}|", x));
             for y in 0..self.scale {
                 use PlayerSymbol::{O, X};
                 let str_symbol = match self.state[x * self.scale + y] {
