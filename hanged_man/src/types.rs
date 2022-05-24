@@ -9,6 +9,12 @@ pub struct HangedManState {
     pub(crate) guesses: Vec<char>,
 }
 
+impl HangedManState {
+    pub fn new(word: &str) -> Self {
+        Self { word: word.to_string(), guesses: vec![] }
+    }
+}
+
 pub enum HangedManAction {
     Play { guess: char },
 }
