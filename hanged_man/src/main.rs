@@ -1,6 +1,6 @@
 const endpoint: &str = "https://random-words-api.herokuapp.com/w?n=1";
 
 fn main() {
-    let body: Vec<&str> = reqwest::blocking::get(endpoint)?.json()?;
-    
+    let response = reqwest::blocking::get(endpoint).unwrap();
+    let word: Vec<String> = response.json().unwrap();
 }
