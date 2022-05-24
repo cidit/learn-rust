@@ -1,8 +1,6 @@
-use reqwest::blocking::{get};
-
-const endpoint: &str = "https://random-words-api.herokuapp.com/w?n=1";
+use hanged_man::misc::get_random_word;
 
 fn main() {
-    let response = get(endpoint).unwrap();
-    let word: Vec<String> = response.json().unwrap();
+    let word = get_random_word();
+    println!("{}", word.ok().unwrap())
 }

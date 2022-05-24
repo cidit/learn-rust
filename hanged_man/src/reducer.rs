@@ -1,4 +1,3 @@
-
 use crate::types::{HangedManAction, HangedManState};
 
 pub fn hanged_man_reducer(state: &HangedManState, action: HangedManAction) -> HangedManState {
