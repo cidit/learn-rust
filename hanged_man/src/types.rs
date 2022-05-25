@@ -11,7 +11,18 @@ pub struct HangedManState {
 
 impl HangedManState {
     pub fn new(word: &str) -> Self {
-        Self { word: word.to_string(), guesses: vec![] }
+        Self {
+            word: word.to_string(),
+            guesses: vec![],
+        }
+    }
+
+    pub fn word(&self) -> &str {
+        return &self.word.as_str();
+    }
+
+    pub fn guesses(&self) -> &[char] {
+        return self.guesses.as_slice();
     }
 }
 
