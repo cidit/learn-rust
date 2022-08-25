@@ -1,12 +1,13 @@
-mod constants;
 
-pub fn game_scale(input: &String) -> Result<i32> {
+use crate::constants;
+
+pub fn game_scale(input: &String) -> Result<i32, &'static str> {
     return match input.trim() {
         "" =>  Ok(constants::DEFAULT_SCALE),
         other => match other.parse::<i32>()? {
             scale if scale > constants::MAX_SCALE => Err(format!("'{}' is too big of a scale", scale)),
             scale if scale < 3 => Err(format!("'{}' is too small of a scale", scale)),
-            scale => scale,
+            scale => Ok(scale),
         }
     }
 }
@@ -36,7 +37,7 @@ pub fn game_scale(input: &String) -> Result<i32> {
 //             Err("input must be a pair of valid integer numbers separated by a colon"),
 //         })
 //         .collect()
-    
+
 //     return (parsed[0], parsed[1])
 // }
 
