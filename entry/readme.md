@@ -28,10 +28,10 @@ Entries match the following format:
 
 ```json
 {
-	"id": A UUID,
-	"timestamp": A timestamp in UTC format,
-	"content": An arbitrary string,
-	"priority": An optional nonnegative integer
+ "id": A UUID,
+ "timestamp": A timestamp in UTC format,
+ "content": An arbitrary string,
+ "priority": An optional nonnegative integer
 }
 ```
 
@@ -39,10 +39,10 @@ For example:
 
 ```json
 {
-	"id": "661520c3-3801-4963-b3c5-d67aa6b4c5ab",
-	"timestamp": "2022-08-20T05:29:26Z",
-	"content": "This is an entry for The Entry Project",
-	"priority": 2
+ "id": "661520c3-3801-4963-b3c5-d67aa6b4c5ab",
+ "timestamp": "2022-08-20T05:29:26Z",
+ "content": "This is an entry for The Entry Project",
+ "priority": 2
 }
 ```
 
@@ -70,21 +70,21 @@ The API must have a mechanism for creating an Entry.
 - An `id` should be randomly generated (UUIDv4).
 - A `timestamp` should also be generated (current time).
 - These exception cases must be handled:
-	- If `id` or `timestamp` are included in the request, they should be ignored and overwritten.
-	- If `content` is missing, return a `400`.
-	- If `priority` is missing, it should be initialized to `0`.
-	- If `priority` is negative, return a `400`.
+  - If `id` or `timestamp` are included in the request, they should be ignored and overwritten.
+  - If `content` is missing, return a `400`.
+  - If `priority` is missing, it should be initialized to `0`.
+  - If `priority` is negative, return a `400`.
 - These exception cases can be optionally handled:
-	- If `priority` is too large to be stored in your language's integer type, return a `400`.
-	- If any other fields are present, return a `400`.
-	- If a duplicate UUID is generated (just in case...).
+  - If `priority` is too large to be stored in your language's integer type, return a `400`.
+  - If any other fields are present, return a `400`.
+  - If a duplicate UUID is generated (just in case...).
 
 ### Database
 
 The API must have a mechanism for persisting entries.
 
 - The entries should be persisted in a relational database.
-	- That is, some flavor of SQL, typically Sqlite.
+  - That is, some flavor of SQL, typically Sqlite.
 - The storage must be preseved between program runs.
 - The primary key for the `entries` table must be `UUID`.
 - The `timestamp` must be stored in a database-native datetime format.

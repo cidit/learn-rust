@@ -1,29 +1,29 @@
 mod model;
+mod routes;
+mod service;
 
-use crate::model::{Entry, Save};
+use routes::api_routes;
 
+use crate::service::SQLiteDAO;
 
 #[macro_use]
 extern crate rocket;
 
-#[get("/")]
-fn getall() -> Vec<Entry> {
-    unimplemented!()
+pub struct AppConfig {
+    pub dao: SQLiteDAO,
 }
-
-#[get("/<id>")]
-fn getone(id: &str) -> Entry {
-    unimplemented!()
-}
-
-#[post("/<id>")]
-fn save(id: Option<&str>) -> Save {
-    unimplemented!()
-}
-
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/api", routes![getall, getone, save])
+    rocket::build()
+        .mount("/api", api_routes())
+        .manage(AppConfig { dao: get_dao() })
 }
 
+fn get_dao() -> SQLiteDAO {
+    if let Ok(p) = std::env::var("DB_PATH") {
+        SQLiteDAO::new(&p)
+    } else {
+        SQLiteDAO::default()
+    }
+}
